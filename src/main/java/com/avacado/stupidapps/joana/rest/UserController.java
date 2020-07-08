@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.avacado.stupidapps.joana.annotations.CurrentLoggedInUser;
 import com.avacado.stupidapps.joana.annotations.JoanaRestController;
@@ -15,6 +17,7 @@ import com.avacado.stupidapps.joana.protocol.response.JoanaUserProtocolResponse;
 import com.avacado.stupidapps.joana.service.interfaces.JoanaUserService;
 
 @JoanaRestController
+@RequestMapping("/user")
 public class UserController
 {
 
@@ -25,8 +28,8 @@ public class UserController
   JoanaUserService joanaUserService;
   
   @PostMapping("/register")
-  public JoanaUserProtocolResponse registerUser(@Valid CreateUserRequest createUserRequest) {
-    JoanaUser user = joanaUserService.createUser(createUserRequest.getEmail(), createUserRequest.getPassword());
+  public JoanaUserProtocolResponse registerUser(@Valid @RequestBody CreateUserRequest createUserRequest) {
+    JoanaUser user = joanaUserService.createUser(createUserRequest.getEmail(), createUserRequest.getName());
     return conversionService.convert(user, JoanaUserProtocolResponse.class);
   }
   
@@ -35,7 +38,7 @@ public class UserController
     return conversionService.convert(user, JoanaUserProtocolResponse.class);
   }
   
-  @GetMapping("/authStatus")
+  @GetMapping("/info")
   public JoanaUserProtocolResponse getAuthStatus(@CurrentLoggedInUser JoanaUser user) {
     return conversionService.convert(user, JoanaUserProtocolResponse.class);
   }

@@ -3,7 +3,6 @@ package com.avacado.stupidapps.joana.configuration.security;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -27,10 +26,9 @@ public class JoanaUserDetailsService implements UserDetailsService
     JoanaUser user = userRespository.findByEmail(username);
     if(user == null)
       throw new UsernameNotFoundException("Invalid username/password");
-    Authentication authResult = new UsernamePasswordAuthenticationToken(user, user.getPassword(),
-        AuthorityUtils.commaSeparatedStringToAuthorityList(user.getAuthoritiesString()));
+    Authentication authResult = new UsernamePasswordAuthenticationToken(user, user.getPassword(), user.getAuthorities());
     SecurityContextHolder.getContext().setAuthentication(authResult);
-    return new User(user.getEmail(), user.getPassword(), AuthorityUtils.commaSeparatedStringToAuthorityList(user.getAuthoritiesString()));
+    return new User(user.getEmail(), user.getPassword(), user.getAuthorities());
   }
 
 }

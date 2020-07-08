@@ -1,9 +1,15 @@
 package com.avacado.stupidapps.joana.protocol.response;
 
+import java.io.Serializable;
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class JoanaUserProtocolResponse
+public class JoanaUserProtocolResponse implements Serializable
 {
+
+  private static final long serialVersionUID = -6964116678033973382L;
+
   @JsonProperty
   public String email;
   
@@ -11,7 +17,7 @@ public class JoanaUserProtocolResponse
   public String xToken;
   
   @JsonProperty
-  public String authorities;
+  public List<String> authorities;
 
   public String getEmail()
   {
@@ -33,12 +39,12 @@ public class JoanaUserProtocolResponse
     this.xToken = xToken;
   }
 
-  public String getAuthorities()
+  public List<String> getAuthorities()
   {
     return authorities;
   }
 
-  public void setAuthorities(String authorities)
+  public void setAuthorities(List<String> authorities)
   {
     this.authorities = authorities;
   }

@@ -3,12 +3,16 @@ package com.avacado.stupidapps.joana.configuration.database;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.mongodb.MongoTransactionManager;
 import org.springframework.data.mongodb.core.SimpleMongoClientDatabaseFactory;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import com.avacado.stupidapps.joana.utils.RequestUtils;
 import com.mongodb.client.MongoDatabase;
 
+@EnableTransactionManagement
 @Configuration
 public class MongoSwitchFactory extends SimpleMongoClientDatabaseFactory
 {
@@ -28,6 +32,11 @@ public class MongoSwitchFactory extends SimpleMongoClientDatabaseFactory
         ? RequestUtils.getDatabaseName()
         : dbName;
     return super.doGetMongoDatabase(currentRequestDatabase);
+  }
+  
+  @Bean
+  public MongoTransactionManager transactionManager(SimpleMongoClientDatabaseFactory dbFactory) {
+      return new MongoTransactionManager(dbFactory);
   }
 
 }

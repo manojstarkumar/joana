@@ -7,7 +7,6 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
@@ -31,8 +30,7 @@ public class JoanaTokenAuthenticationProvider implements AuthenticationProvider
       JoanaUser user = joanaUserRepository.findByxToken(token);
       if (user != null)
       {
-        Authentication authResult = new UsernamePasswordAuthenticationToken(user, user.getPassword(),
-            AuthorityUtils.commaSeparatedStringToAuthorityList(user.getAuthoritiesString()));
+        Authentication authResult = new UsernamePasswordAuthenticationToken(user, user.getPassword(), user.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(authResult);
         return authResult;
       }
