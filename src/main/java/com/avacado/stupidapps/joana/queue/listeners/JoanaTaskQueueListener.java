@@ -1,9 +1,14 @@
 package com.avacado.stupidapps.joana.queue.listeners;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +24,7 @@ import com.avacado.stupidapps.joana.domain.JoanaExecutionHistory;
 import com.avacado.stupidapps.joana.domain.JoanaExecutionMode;
 import com.avacado.stupidapps.joana.domain.JoanaStates;
 import com.avacado.stupidapps.joana.domain.JoanaUser;
+import com.avacado.stupidapps.joana.domain.notifiers.JoanaNotifier;
 import com.avacado.stupidapps.joana.domain.pipe.JoanaPipeBase.JoanaPipeStep;
 import com.avacado.stupidapps.joana.domain.pipe.JoanaPipeExecution;
 import com.avacado.stupidapps.joana.domain.task.JoanaTask;
@@ -51,6 +57,11 @@ public class JoanaTaskQueueListener {
 
     @Autowired
     private JoanaTaskService joanaTaskService;
+    
+    @Autowired
+    private List<JoanaNotifier> notifiers;
+    
+    private ExecutorService executors = Executors.newCachedThreadPool();
 
     @Transactional
     @RabbitHandler
@@ -127,16 +138,14 @@ public class JoanaTaskQueueListener {
 	    }
 	}
 
-	pipe.getPipeWatchers().parallelStream().forEach(watcher -> {
-	    JoanaUser user = joanaUserRepository.findByEmail(watcher);
-	    if (user != null && user.getPushToken() != null) {
-		sendFcmNotification(
-			String.format("FYI/A, %s stage %d/%d. Task %s : %s. Pipeline : %s", pipe.getPipeName(),
-				currentStep.getPosition(), pipe.getPipeSteps().size(), joanaTaskExecution.getName(),
-				joanaTaskExecution.getState().getDisplayName(), pipe.getState().getDisplayName()),
-			user.getPushToken());
-	    }
+	String notificationText = String.format("FYI/A, %s stage %d/%d. Task %s : %s. Pipeline : %s", pipe.getPipeName(),
+		currentStep.getPosition(), pipe.getPipeSteps().size(), joanaTaskExecution.getName(),
+		joanaTaskExecution.getState().getDisplayName(), pipe.getState().getDisplayName());
+	
+	notifiers.forEach(notifier -> {
+	    executors.execute(() -> notifier.notify(pipe.getPipeWatchers(), notificationText));
 	});
+
 	joanaPipeExecutionRepository.save(pipe);
     }
 
@@ -144,40 +153,35 @@ public class JoanaTaskQueueListener {
 	logger.debug("Notifying all reviewers");
 	String notificationText = String.format("FYI/A, Task %s : %s", joanaTaskExecution.getName(),
 		joanaTaskExecution.getState().getDisplayName());
-	final boolean notifyInitiator[] = { true };
-	joanaTaskExecution.getReviewers().stream().forEach(reviewer -> {
-	    JoanaUser user = joanaUserRepository.findByEmail(reviewer.getEmail());
-	    if (user != null) {
-		if (user.getEmail().equals(joanaTaskExecution.getTriggeredBy().getInitiatorId()))
-		    notifyInitiator[0] = false;
-		updateUserPendingActions(joanaTaskExecution, user);
-		if (user.getPushToken() != null) {
-		    sendFcmNotification(notificationText, user.getPushToken());
-		}
-		joanaUserRepository.save(user);
-	    }
+	final List<String> peopleToNotify = Stream
+		.concat(Stream.of(joanaTaskExecution.getTriggeredBy().getInitiatorId()),
+			joanaTaskExecution.getReviewers().stream().map(reviewer -> reviewer.getEmail()))
+		.distinct().collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+	
+	executors.execute(() -> updateUserPendingActions(joanaTaskExecution));
+	
+	notifiers.forEach(notifier -> {
+	    executors.execute(() -> notifier.notify(peopleToNotify, notificationText));
 	});
-	if (notifyInitiator[0]) {
-	    JoanaUser user = joanaUserRepository.findByEmail(joanaTaskExecution.getTriggeredBy().getInitiatorId());
-	    if (user != null && user.getPushToken() != null) {
-		sendFcmNotification(notificationText, user.getPushToken());
-	    }
-	}
+
 	joanaTaskExecution.addComment("AUTO-SYS",
 		String.format("%s notification sent", joanaTaskExecution.getState().getDisplayName()));
 	joanaTaskExecutionRepository.save(joanaTaskExecution);
 
     }
 
-    private void updateUserPendingActions(JoanaTaskExecution joanaTaskExecution, JoanaUser user) {
-	if (joanaTaskExecution.getState() == JoanaStates.PROGRESS) {
-	    user.addTasksActionsNeeded(joanaTaskExecution.getId());
-	} else {
-	    user.removeTasksActionsNeeded(joanaTaskExecution.getId());
-	}
+    private void updateUserPendingActions(JoanaTaskExecution joanaTaskExecution) {
+	joanaTaskExecution.getReviewers().stream().forEach(reviewer -> {
+	    JoanaUser user = joanaUserRepository.findByEmail(reviewer.getEmail());
+	    if (user != null) {
+		if (joanaTaskExecution.getState() == JoanaStates.PROGRESS) {
+		    user.addTasksActionsNeeded(joanaTaskExecution.getId());
+		} else {
+		    user.removeTasksActionsNeeded(joanaTaskExecution.getId());
+		}
+		joanaUserRepository.save(user);
+	    }
+	});
     }
 
-    private void sendFcmNotification(String message, String token) {
-
-    }
 }
