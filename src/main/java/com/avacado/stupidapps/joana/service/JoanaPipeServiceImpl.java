@@ -19,6 +19,7 @@ import com.avacado.stupidapps.joana.protocol.request.JoanaCreatePipeRequest;
 import com.avacado.stupidapps.joana.repository.JoanaPipeExecutionRepository;
 import com.avacado.stupidapps.joana.repository.JoanaPipeRepository;
 import com.avacado.stupidapps.joana.repository.JoanaTaskRepository;
+import com.avacado.stupidapps.joana.repository.JoanaUserRepository;
 import com.avacado.stupidapps.joana.service.interfaces.JoanaPipeService;
 import com.avacado.stupidapps.joana.service.interfaces.JoanaQueueService;
 
@@ -36,6 +37,9 @@ public class JoanaPipeServiceImpl implements JoanaPipeService {
 
     @Autowired
     private JoanaQueueService joanaQueueService;
+    
+    @Autowired
+    private JoanaUserRepository joanaUserRepository;
 
     private Logger logger = LoggerFactory.getLogger(JoanaPipeServiceImpl.class);
 
@@ -78,6 +82,8 @@ public class JoanaPipeServiceImpl implements JoanaPipeService {
 	    throw new JoanaException("Invalid action", HttpStatus.FORBIDDEN);
 	}
 	joanaPipeRepository.delete(pipe.get());
+	currentUser.removeTasksOwned(pipeId);
+	joanaUserRepository.save(currentUser);
     }
 
     @Override
@@ -104,7 +110,10 @@ public class JoanaPipeServiceImpl implements JoanaPipeService {
 	    pipe.addPipeStep(task.get().getId(), task.get().getName());
 	});
 
-	return joanaPipeRepository.save(pipe);
+	JoanaPipe persistedPipe = joanaPipeRepository.save(pipe);
+	currentUser.addPipesOwned(persistedPipe.getId());
+	joanaUserRepository.save(currentUser);
+	return persistedPipe;
     }
 
     @Override

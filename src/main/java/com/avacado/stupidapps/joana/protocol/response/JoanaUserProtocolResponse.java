@@ -11,13 +11,16 @@ public class JoanaUserProtocolResponse implements Serializable
   private static final long serialVersionUID = -6964116678033973382L;
 
   @JsonProperty
-  public String email;
+  private String email;
   
   @JsonProperty
-  public String xToken;
+  private String xToken;
   
   @JsonProperty
-  public List<String> authorities;
+  private String name;
+  
+  @JsonProperty
+  private List<String> authorities;
 
   public String getEmail()
   {
@@ -48,4 +51,12 @@ public class JoanaUserProtocolResponse implements Serializable
   {
     this.authorities = authorities;
   }
+
+public String getName() {
+    return name;
+}
+
+public void setName(String name) {
+    this.name = name;
+}
 }

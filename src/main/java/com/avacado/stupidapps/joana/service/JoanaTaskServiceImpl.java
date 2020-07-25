@@ -1,5 +1,6 @@
 package com.avacado.stupidapps.joana.service;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -63,7 +64,11 @@ public class JoanaTaskServiceImpl implements JoanaTaskService {
 	    task.addReviewer(user);
 
 	});
-	return joanaTaskRepository.save(task);
+	JoanaTask persistedTask = joanaTaskRepository.save(task);
+	currentUser.addTasksOwned(persistedTask.getId());
+	joanaUserRepository.save(currentUser);
+	return persistedTask;
+
     }
 
     @Transactional(rollbackFor = NullPointerException.class)
@@ -207,6 +212,8 @@ public class JoanaTaskServiceImpl implements JoanaTaskService {
 	    throw new JoanaException("Invalid operation", HttpStatus.FORBIDDEN);
 	}
 	joanaTaskRepository.delete(task.get());
+	currentUser.removeTasksActionsNeeded(taskId);
+	joanaUserRepository.save(currentUser);
     }
 
     @Transactional
@@ -236,6 +243,15 @@ public class JoanaTaskServiceImpl implements JoanaTaskService {
 	});
 
 	return joanaTaskRepository.save(task.get());
+    }
+
+    @Override
+    public List<JoanaTaskExecution> getPendingTasks(JoanaUser currentUser) {
+	List<JoanaTaskExecution> pendingTasks = new ArrayList<>();
+	if(currentUser.getTasksActionsNeeded() != null && currentUser.getTasksActionsNeeded().size() > 0) {
+	    joanaTaskExecutionRepository.findAllById(currentUser.getTasksActionsNeeded()).forEach(pendingTasks::add);
+	}
+	return pendingTasks;
     }
 
 }

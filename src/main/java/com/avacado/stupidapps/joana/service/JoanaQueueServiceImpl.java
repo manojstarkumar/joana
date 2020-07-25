@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import com.avacado.stupidapps.joana.domain.pipe.JoanaPipeExecution;
 import com.avacado.stupidapps.joana.domain.task.JoanaTaskExecution;
 import com.avacado.stupidapps.joana.service.interfaces.JoanaQueueService;
+import com.avacado.stupidapps.joana.utils.JoanaConstants;
+import com.avacado.stupidapps.joana.utils.RequestUtils;
 
 @Service
 public class JoanaQueueServiceImpl implements JoanaQueueService {
@@ -24,17 +26,24 @@ public class JoanaQueueServiceImpl implements JoanaQueueService {
     private String rabbitPipeExchange;
     @Value("${joana.pipe.rabbit.routingkey}")
     private String rabbitPipeRoutingKey;
-    
+
     @Override
     public void queueTaskForProcessing(JoanaTaskExecution persistedExecution) {
-	rabbitTemplate.convertAndSend(rabbitTaskExchange, rabbitTaskRoutingKey, persistedExecution);
-	
+	convertAndSend(persistedExecution);
+
     }
 
     @Override
     public void queuePipeForProcessing(JoanaPipeExecution persistedExecution) {
-	rabbitTemplate.convertAndSend(rabbitPipeExchange, rabbitPipeRoutingKey, persistedExecution);
-	
+	convertAndSend(persistedExecution);
+    }
+
+    private void convertAndSend(Object persistedExecution) {
+	rabbitTemplate.convertAndSend(rabbitTaskExchange, rabbitTaskRoutingKey, persistedExecution, postprocessor -> {
+	    postprocessor.getMessageProperties().getHeaders().put(JoanaConstants.RMQ_DB_VALUE_HEADER,
+		    RequestUtils.getDatabaseName());
+	    return postprocessor;
+	});
     }
 
 }

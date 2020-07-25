@@ -1,6 +1,8 @@
 package com.avacado.stupidapps.joana.configuration.database;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -17,6 +19,7 @@ import com.mongodb.client.MongoDatabase;
 public class MongoSwitchFactory extends SimpleMongoClientDatabaseFactory
 {
 
+    Logger log = LoggerFactory.getLogger(MongoSwitchFactory.class);
   @Autowired
   public MongoSwitchFactory(@Value("${mongo.server.name}") String mongoDbServer,
       @Value("${mongo.server.port}") String mongoDbPort,
@@ -31,7 +34,8 @@ public class MongoSwitchFactory extends SimpleMongoClientDatabaseFactory
     String currentRequestDatabase = StringUtils.isNotEmpty(RequestUtils.getDatabaseName())
         ? RequestUtils.getDatabaseName()
         : dbName;
-    return super.doGetMongoDatabase(currentRequestDatabase);
+        MongoDatabase db = super.doGetMongoDatabase(currentRequestDatabase);
+        return db;
   }
   
   @Bean

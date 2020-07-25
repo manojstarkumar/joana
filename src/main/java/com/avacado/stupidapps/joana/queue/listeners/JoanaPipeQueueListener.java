@@ -3,12 +3,14 @@ package com.avacado.stupidapps.joana.queue.listeners;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitHandler;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.handler.annotation.Headers;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +26,8 @@ import com.avacado.stupidapps.joana.domain.task.JoanaTaskExecution;
 import com.avacado.stupidapps.joana.repository.JoanaPipeExecutionRepository;
 import com.avacado.stupidapps.joana.repository.JoanaPipeRepository;
 import com.avacado.stupidapps.joana.service.interfaces.JoanaTaskService;
+import com.avacado.stupidapps.joana.utils.JoanaConstants;
+import com.avacado.stupidapps.joana.utils.RequestUtils;
 
 @Component
 @RabbitListener(queues = "${joana.pipe.rabbit.queue}")
@@ -42,7 +46,10 @@ public class JoanaPipeQueueListener {
 
     @Transactional
     @RabbitHandler
-    public void processPipeExecution(@Payload JoanaPipeExecution joanaPipeExecution) {
+    public void processPipeExecution(@Payload JoanaPipeExecution joanaPipeExecution, @Headers Map<String, Object> headers) {
+	if(headers.get(JoanaConstants.RMQ_DB_VALUE_HEADER) != null) {
+	    RequestUtils.setDatabaseName((String) headers.get(JoanaConstants.RMQ_DB_VALUE_HEADER));
+	}
 	JoanaPipe parentPipe = joanaPipeRepository.findById(joanaPipeExecution.getParentPipe()).get();
 
 	List<JoanaPipeStep> pipeSteps = parentPipe.getPipeSteps();

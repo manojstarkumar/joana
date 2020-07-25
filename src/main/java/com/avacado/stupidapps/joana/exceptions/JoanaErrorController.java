@@ -16,6 +16,8 @@ import org.springframework.boot.web.error.ErrorAttributeOptions;
 import org.springframework.boot.web.error.ErrorAttributeOptions.Include;
 import org.springframework.boot.web.servlet.error.ErrorAttributes;
 import org.springframework.boot.web.servlet.error.ErrorController;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.context.request.WebRequest;
 
@@ -62,6 +64,10 @@ public class JoanaErrorController implements ErrorController {
 	    map.put("status", ((JoanaException) error).getHttpStatus().value());
 	    if (!debug)
 		map.put("error", ((JoanaException) error).getExceptionMessage());
+	}
+	if(error instanceof BadCredentialsException) {
+	    map.put("error", "Invalid username/password");
+	    map.put("status", HttpStatus.FORBIDDEN.value());
 	}
 	return map;
     }

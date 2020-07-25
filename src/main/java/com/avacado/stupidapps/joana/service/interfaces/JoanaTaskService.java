@@ -1,5 +1,7 @@
 package com.avacado.stupidapps.joana.service.interfaces;
 
+import java.util.List;
+
 import com.avacado.stupidapps.joana.domain.JoanaExecutionMode;
 import com.avacado.stupidapps.joana.domain.JoanaReviewStates;
 import com.avacado.stupidapps.joana.domain.JoanaStates;
@@ -28,5 +30,7 @@ public interface JoanaTaskService {
 
     JoanaTaskExecution updateExecutionTaskStatus(JoanaUser currentUser, String taskId, JoanaReviewStates state,
 	    JoanaTaskExecutionUpdateRequest joanaTaskExecutionUpdateRequest);
+    
+    List<JoanaTaskExecution> getPendingTasks(JoanaUser currentUser);
 
 }

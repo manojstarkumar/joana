@@ -13,7 +13,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import com.avacado.stupidapps.joana.converters.JoanaUsersToProtocolConverter;
+import com.avacado.stupidapps.joana.protocol.converter.JoanaUsersToProtocolConverter;
 
 @Configuration
 @EnableWebSecurity

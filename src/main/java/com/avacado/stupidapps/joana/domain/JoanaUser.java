@@ -108,6 +108,32 @@ public class JoanaUser {
     public void setTasksOwned(List<String> tasksOwned) {
 	this.tasksOwned = tasksOwned;
     }
+    
+    @Transient
+    public void addTasksOwned(String task) {
+	if(this.tasksOwned == null)
+	    this.tasksOwned = new ArrayList<>();
+	this.tasksOwned.add(task);
+    }
+    
+    @Transient
+    public void removeTasksOwned(String task) {
+	if(this.tasksOwned != null)
+	    this.tasksOwned.remove(task);
+    }
+    
+    @Transient
+    public void addPipesOwned(String pipe) {
+	if(this.pipelinesOwned == null)
+	    this.pipelinesOwned = new ArrayList<>();
+	this.pipelinesOwned.add(pipe);
+    }
+    
+    @Transient
+    public void removePipesOwned(String pipe) {
+	if(this.pipelinesOwned != null)
+	    this.pipelinesOwned.remove(pipe);
+    }
 
     public List<String> getTasksActionsNeeded() {
 	return tasksActionsNeeded;
@@ -126,9 +152,8 @@ public class JoanaUser {
     
     @Transient
     public void removeTasksActionsNeeded(String tasksId) {
-	if (this.tasksActionsNeeded == null)
-	    this.tasksActionsNeeded = new ArrayList<>();
-	this.tasksActionsNeeded.remove(tasksId);
+	if (this.tasksActionsNeeded != null)
+	    this.tasksActionsNeeded.remove(tasksId);
     }
 
     public List<String> getPipelinesOwned() {

@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.avacado.stupidapps.joana.domain.JoanaUser;
@@ -33,7 +34,7 @@ public class JoanaUserServiceImpl implements JoanaUserService {
 	JoanaUser joanaUser = new JoanaUser();
 	joanaUser.setEmail(email);
 	joanaUser.setName(name);
-	joanaUser.setPassword(generatedPassword);
+	joanaUser.setPassword(new BCryptPasswordEncoder().encode(generatedPassword));
 	List<GrantedAuthority> grantedAuthorities = new ArrayList<>();
 	grantedAuthorities.add(new SimpleGrantedAuthority(JoanaConstants.DEFAULT_AUTHORITY));
 	joanaUser.setAuthorities(grantedAuthorities);

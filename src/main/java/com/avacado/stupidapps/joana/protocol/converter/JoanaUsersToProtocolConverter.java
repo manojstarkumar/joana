@@ -1,4 +1,4 @@
-package com.avacado.stupidapps.joana.converters;
+package com.avacado.stupidapps.joana.protocol.converter;
 
 import java.util.stream.Collectors;
 
@@ -17,6 +17,7 @@ public class JoanaUsersToProtocolConverter implements Converter<JoanaUser, Joana
     response.setEmail(joanaUser.getEmail());
     response.setxToken(joanaUser.getxToken());
     response.setAuthorities(joanaUser.getAuthorities().parallelStream().map(auth -> auth.getAuthority()).collect(Collectors.toList()));
+    response.setName(joanaUser.getName());
     return response;
   }
 

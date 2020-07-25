@@ -2,6 +2,7 @@ package com.avacado.stupidapps.joana.queue.listeners;
 
 import java.util.Collections;
 import java.util.Date;
+import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -9,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitHandler;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.handler.annotation.Headers;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +28,8 @@ import com.avacado.stupidapps.joana.repository.JoanaTaskExecutionRepository;
 import com.avacado.stupidapps.joana.repository.JoanaTaskRepository;
 import com.avacado.stupidapps.joana.repository.JoanaUserRepository;
 import com.avacado.stupidapps.joana.service.interfaces.JoanaTaskService;
+import com.avacado.stupidapps.joana.utils.JoanaConstants;
+import com.avacado.stupidapps.joana.utils.RequestUtils;
 
 @Component
 @RabbitListener(queues = "${joana.task.rabbit.queue}")
@@ -50,8 +54,11 @@ public class JoanaTaskQueueListener {
 
     @Transactional
     @RabbitHandler
-    public void processTaskExecution(@Payload JoanaTaskExecution joanaTaskExecution) {
-
+    public void processTaskExecution(@Payload JoanaTaskExecution joanaTaskExecution,
+	    @Headers Map<String, Object> headers) {
+	if (headers.get(JoanaConstants.RMQ_DB_VALUE_HEADER) != null) {
+	    RequestUtils.setDatabaseName((String) headers.get(JoanaConstants.RMQ_DB_VALUE_HEADER));
+	}
 	notifyReviewersAndUpdatePendingTasks(joanaTaskExecution);
 
 	logger.debug("Updating status of Parent " + joanaTaskExecution.getParentTask());
@@ -138,7 +145,7 @@ public class JoanaTaskQueueListener {
 	String notificationText = String.format("FYI/A, Task %s : %s", joanaTaskExecution.getName(),
 		joanaTaskExecution.getState().getDisplayName());
 	final boolean notifyInitiator[] = { true };
-	joanaTaskExecution.getReviewers().parallelStream().forEach(reviewer -> {
+	joanaTaskExecution.getReviewers().stream().forEach(reviewer -> {
 	    JoanaUser user = joanaUserRepository.findByEmail(reviewer.getEmail());
 	    if (user != null) {
 		if (user.getEmail().equals(joanaTaskExecution.getTriggeredBy().getInitiatorId()))
@@ -163,9 +170,11 @@ public class JoanaTaskQueueListener {
     }
 
     private void updateUserPendingActions(JoanaTaskExecution joanaTaskExecution, JoanaUser user) {
-	if (joanaTaskExecution.getState() == JoanaStates.PROGRESS)
+	if (joanaTaskExecution.getState() == JoanaStates.PROGRESS) {
 	    user.addTasksActionsNeeded(joanaTaskExecution.getId());
-	user.removeTasksActionsNeeded(joanaTaskExecution.getId());
+	} else {
+	    user.removeTasksActionsNeeded(joanaTaskExecution.getId());
+	}
     }
 
     private void sendFcmNotification(String message, String token) {

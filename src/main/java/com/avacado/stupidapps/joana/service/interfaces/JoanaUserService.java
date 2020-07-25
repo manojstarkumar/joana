@@ -7,4 +7,5 @@ public interface JoanaUserService {
     JoanaUser getUserByEmail(String email);
 
     JoanaUser createUser(String email, String name);
+
 }
